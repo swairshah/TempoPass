@@ -1,41 +1,7 @@
 /**
  * Background service worker for Tempo Access Key extension.
- * 
- * Opens the extension UI as a standalone window (not a popup bubble)
- * so that WebAuthn/Touch ID dialogs don't close it.
+ * Handles access key expiry checks.
  */
-
-let windowId: number | null = null
-
-// Click extension icon → open as standalone window
-chrome.action.onClicked.addListener(async () => {
-  // If window already exists, focus it
-  if (windowId !== null) {
-    try {
-      const win = await chrome.windows.get(windowId)
-      if (win) {
-        await chrome.windows.update(windowId, { focused: true })
-        return
-      }
-    } catch {
-      windowId = null
-    }
-  }
-
-  // Open popup.html in a standalone popup window
-  const win = await chrome.windows.create({
-    url: chrome.runtime.getURL('popup.html'),
-    type: 'popup',
-    width: 420,
-    height: 700,
-  })
-  windowId = win.id ?? null
-})
-
-// Track when our window is closed
-chrome.windows.onRemoved.addListener((id) => {
-  if (id === windowId) windowId = null
-})
 
 // Handle access key expiry checks
 chrome.alarms?.create('checkExpiry', { periodInMinutes: 1 })

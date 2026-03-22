@@ -1,10 +1,9 @@
-<p align="center">
-  <img src="extension/icons/icon128.png" alt="Tempo Access Key" width="96">
-</p>
+<h1>
+  <img src="extension/icons/icon128.png" alt="" width="56" height="56" style="vertical-align: middle; margin-right: 0.35em;">
+  Tempo Wallet Browser Extension
+</h1>
 
-<h1 align="center">Tempo Access Key Browser Extension</h1>
-
-<p align="center">
+<p>
   A Chrome extension that creates time-limited, spending-capped access keys for your existing Tempo wallet. Uses your actual wallet passkey — no private keys, no new wallets.
 </p>
 

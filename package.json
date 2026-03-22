@@ -1,0 +1,23 @@
+{
+  "name": "tempo-extension",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test:poc": "npx tsx test-access-key.ts",
+    "build:ext": "cd extension && node build.mjs",
+    "dev:ext": "cd extension && node build.mjs && echo 'Load extension/dist in chrome://extensions'",
+    "dev:blog": "npx tsx sample_website/server.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@types/node": "^25.5.0",
+    "esbuild": "^0.27.4",
+    "mppx": "^0.4.8",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
+    "viem": "^2.47.6"
+  }
+}

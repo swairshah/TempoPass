@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Privacy Policy — TempoPass Chrome Extension</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.7;
+    color: #1a1a2e;
+    background: #fafafa;
+    padding: 40px 20px;
+  }
+  .container {
+    max-width: 720px;
+    margin: 0 auto;
+    background: #fff;
+    border-radius: 12px;
+    padding: 48px 40px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+  .updated { color: #666; font-size: 14px; margin-bottom: 32px; }
+  h2 { font-size: 20px; font-weight: 600; margin-top: 32px; margin-bottom: 12px; }
+  p { margin-bottom: 16px; }
+  ul { margin: 0 0 16px 24px; }
+  li { margin-bottom: 6px; }
+  a { color: #2563eb; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .footer { margin-top: 40px; padding-top: 24px; border-top: 1px solid #eee; font-size: 14px; color: #666; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>Privacy Policy</h1>
+<p class="updated">TempoPass — Chrome Extension<br>Last updated: March 22, 2026</p>
+
+<h2>Overview</h2>
+<p>TempoPass ("the Extension") is a Chrome browser extension that creates time-limited, spending-capped access keys for Tempo blockchain wallets. This privacy policy explains what data the Extension accesses, how it is used, and how it is stored.</p>
+
+<h2>Data We Collect</h2>
+<p>The Extension does <strong>not</strong> collect, transmit, or share any personal data with the developer or any third party. All data remains on your device.</p>
+
+<h2>Data Stored Locally</h2>
+<p>The Extension stores the following data in Chrome's built-in storage APIs on your device:</p>
+<ul>
+  <li><strong>Wallet credential reference</strong> (chrome.storage.local): Your passkey credential ID and public key, read from wallet.tempo.xyz during the one-time connection step. This is not your private key — your private key never leaves your device's secure hardware enclave (e.g., Secure Enclave on macOS, TPM on Windows).</li>
+  <li><strong>Active access key session</strong> (chrome.storage.session): The P256 private key of the currently active access key, its on-chain address, expiry timestamp, and spending limit. This data is automatically cleared when Chrome closes or when the key expires.</li>
+  <li><strong>Transaction log</strong> (chrome.storage.local): A record of the last 20 transactions made through the Extension, including transaction hash, amount, recipient address, and timestamp.</li>
+</ul>
+
+<h2>Data Accessed from Websites</h2>
+<p>During the one-time wallet connection flow, the Extension briefly opens wallet.tempo.xyz in a background tab and reads your passkey credential ID and public key from that page's localStorage. The tab is immediately closed. The Extension does not read, modify, or access any other website data.</p>
+
+<h2>Content Scripts and MPP</h2>
+<p>The Extension injects a small content script on all web pages to support the Micropayment Protocol (MPP). This script intercepts HTTP 402 (Payment Required) responses and facilitates automatic payment using your access key. The content script:</p>
+<ul>
+  <li>Does <strong>not</strong> read or modify page content, DOM elements, cookies, or localStorage of any website other than wallet.tempo.xyz during connection.</li>
+  <li>Does <strong>not</strong> track your browsing history or activity.</li>
+  <li>Only activates when a website returns an HTTP 402 response with a Payment authentication challenge.</li>
+</ul>
+
+<h2>Network Requests</h2>
+<p>The Extension makes network requests only to:</p>
+<ul>
+  <li><strong>Tempo blockchain RPC endpoint</strong> (rpc.presto.tempo.xyz): To submit transactions, check balances, and query access key status. These are standard blockchain RPC calls and do not include any personal identifying information.</li>
+</ul>
+<p>The Extension does not communicate with any analytics services, advertising networks, or telemetry endpoints.</p>
+
+<h2>Third-Party Services</h2>
+<p>The Extension does not use any third-party analytics, tracking, or advertising services. The only external service accessed is the Tempo blockchain network via its public RPC endpoint.</p>
+
+<h2>Data Sharing</h2>
+<p>The Extension shares no data with the developer or any third party. All data remains local to your Chrome browser and your device.</p>
+
+<h2>Data Deletion</h2>
+<p>You can delete all Extension data at any time by:</p>
+<ul>
+  <li>Clicking "Disconnect" in the Extension popup, which clears all stored data.</li>
+  <li>Uninstalling the Extension, which removes all associated Chrome storage.</li>
+</ul>
+
+<h2>Security</h2>
+<p>Your passkey private key is never accessed, displayed, or stored by the Extension. Access keys are P256 keypairs generated locally in your browser, authorized on-chain with your passkey, and subject to on-chain spending limits and expiry enforced by the Tempo protocol smart contracts.</p>
+
+<h2>Changes to This Policy</h2>
+<p>If this policy is updated, the "Last updated" date at the top will be revised. Continued use of the Extension after changes constitutes acceptance of the updated policy.</p>
+
+<h2>Contact</h2>
+<p>For questions about this privacy policy or the Extension, contact: <a href="mailto:swairshah@gmail.com">swairshah@gmail.com</a></p>
+
+<div class="footer">
+  <p>TempoPass is an open-source Chrome extension. This privacy policy applies to version 2.0.0 and later.</p>
+</div>
+
+</div>
+</body>
+</html>

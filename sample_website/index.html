@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>tempo blog — MPP demo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <nav>
+    <a href="/" class="nav-brand">tempo blog</a>
+    <span class="nav-meta">mpp-enabled</span>
+  </nav>
+
+  <main>
+    <article>
+      <div class="post-header">
+        <h1 id="title">Loading...</h1>
+        <div class="post-meta">
+          <span id="author"></span> · <span id="date"></span>
+        </div>
+      </div>
+
+      <!-- Preview content (always shown) -->
+      <div id="previewContent" class="post-content"></div>
+
+      <!-- Paywall (shown until payment) -->
+      <div id="paywall" class="paywall" style="display: none;">
+        <div class="paywall-fade" id="paywallFade"></div>
+        <div class="paywall-prompt">
+          <h3>continue reading</h3>
+          <p>this article is paid via the Machine Payment Protocol.</p>
+          <div class="paywall-price" id="price">—</div>
+          <button id="btnUnlock" class="btn" onclick="unlockArticle()">
+            unlock full article →
+          </button>
+          <div id="status" class="status-msg"></div>
+        </div>
+      </div>
+
+      <!-- Full content (shown after payment) -->
+      <div id="fullContent" class="post-content full-content" style="display: none;"></div>
+
+      <div id="receipt" style="display: none;">
+        <span class="receipt-badge">✓ paid via MPP</span>
+      </div>
+    </article>
+  </main>
+
+  <script>
+    const API = window.location.origin
+
+    function renderContent(text) {
+      return text
+        .split('\n\n')
+        .map(para => {
+          if (para.startsWith('## ')) return `<h2>${para.slice(3)}</h2>`
+          para = para.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+          para = para.replace(/`(.+?)`/g, '<code>$1</code>')
+          if (para.startsWith('- ')) {
+            const items = para.split('\n').map(l => `<li>${l.slice(2)}</li>`).join('')
+            return `<ul>${items}</ul>`
+          }
+          return `<p>${para}</p>`
+        })
+        .join('\n')
+    }
+
+    function showFullContent(data) {
+      document.getElementById('paywall').style.display = 'none'
+      document.getElementById('previewContent').style.display = 'none'
+      document.getElementById('fullContent').innerHTML = renderContent(data.content)
+      document.getElementById('fullContent').style.display = 'block'
+      document.getElementById('receipt').style.display = 'block'
+    }
+
+    function setStatus(msg, type = '') {
+      const el = document.getElementById('status')
+      el.textContent = msg
+      el.className = `status-msg ${type}`
+    }
+
+    // Load preview, then check if we already have a cached credential
+    async function loadPreview() {
+      try {
+        const res = await fetch(`${API}/api/preview`)
+        const data = await res.json()
+
+        document.getElementById('title').textContent = data.title
+        document.getElementById('author').textContent = data.author
+        document.getElementById('date').textContent = data.date
+        document.getElementById('previewContent').innerHTML = renderContent(data.content)
+        document.getElementById('price').textContent = `${data.price} ${data.currency}`
+
+        // Try fetching full content — if the extension has a cached
+        // credential from a previous payment, it will attach it
+        // automatically and the server will return 200.
+        const fullRes = await fetch(`${API}/api/full`)
+        if (fullRes.ok) {
+          const fullData = await fullRes.json()
+          showFullContent(fullData)
+          return
+        }
+
+        // No cached credential or it was rejected — show paywall
+        document.getElementById('paywall').style.display = 'block'
+      } catch (err) {
+        document.getElementById('title').textContent = 'Error loading article'
+      }
+    }
+
+    // Unlock via MPP — pure protocol:
+    //   fetch → 402 → extension pays → retries with credential → 200
+    // On repeat visits the extension's cached credential is sent automatically,
+    // so the server verifies it and returns 200 without a new charge.
+    async function unlockArticle() {
+      const btn = document.getElementById('btnUnlock')
+      btn.disabled = true
+      setStatus('requesting full article...', 'loading')
+
+      try {
+        const res = await fetch(`${API}/api/full`)
+
+        if (res.status === 402) {
+          setStatus('payment required — make sure Tempo extension is active with an access key', 'error')
+          btn.disabled = false
+          return
+        }
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({ error: 'Unknown error' }))
+          setStatus(err.error || `Error ${res.status}`, 'error')
+          btn.disabled = false
+          return
+        }
+
+        const data = await res.json()
+        showFullContent(data)
+
+      } catch (err) {
+        setStatus(err.message || 'Failed to unlock', 'error')
+        btn.disabled = false
+      }
+    }
+
+    loadPreview()
+  </script>
+</body>
+</html>

@@ -12,10 +12,7 @@
 <body>
   <nav>
     <a href="/" class="nav-brand">tempo blog</a>
-    <span class="nav-meta">
-      <span id="walletInfo" style="display: none; color: rgb(16, 185, 129); margin-right: 8px;"></span>
-      mpp-enabled
-    </span>
+    <span class="nav-meta">mpp-enabled</span>
   </nav>
 
   <main>
@@ -55,16 +52,12 @@
 
   <script>
     const API = window.location.origin
-    let walletAddress = null
 
-    // Convert markdown-ish text to HTML
     function renderContent(text) {
       return text
         .split('\n\n')
         .map(para => {
-          if (para.startsWith('## ')) {
-            return `<h2>${para.slice(3)}</h2>`
-          }
+          if (para.startsWith('## ')) return `<h2>${para.slice(3)}</h2>`
           para = para.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
           para = para.replace(/`(.+?)`/g, '<code>$1</code>')
           if (para.startsWith('- ')) {
@@ -76,13 +69,12 @@
         .join('\n')
     }
 
-    function showFullContent(data, label = '✓ paid via MPP') {
+    function showFullContent(data) {
       document.getElementById('paywall').style.display = 'none'
       document.getElementById('previewContent').style.display = 'none'
       document.getElementById('fullContent').innerHTML = renderContent(data.content)
       document.getElementById('fullContent').style.display = 'block'
       document.getElementById('receipt').style.display = 'block'
-      document.querySelector('.receipt-badge').textContent = label
     }
 
     function setStatus(msg, type = '') {
@@ -91,51 +83,7 @@
       el.className = `status-msg ${type}`
     }
 
-    // Listen for wallet address from Tempo extension
-    window.addEventListener('tempo:wallet', async (e) => {
-      walletAddress = e.detail.address
-      console.log('[Blog] Tempo wallet detected:', walletAddress)
-      document.getElementById('walletInfo').textContent = `wallet: ${walletAddress.slice(0, 8)}...${walletAddress.slice(-6)}`
-      document.getElementById('walletInfo').style.display = 'inline'
-
-      // Check if this wallet already has access
-      await checkExistingAccess()
-    })
-
-    // Also check if address was set before our listener (race condition)
-    setTimeout(() => {
-      if (!walletAddress && window.__TEMPO_WALLET_ADDRESS__) {
-        walletAddress = window.__TEMPO_WALLET_ADDRESS__
-        console.log('[Blog] Tempo wallet detected (delayed):', walletAddress)
-        document.getElementById('walletInfo').textContent = `wallet: ${walletAddress.slice(0, 8)}...${walletAddress.slice(-6)}`
-        document.getElementById('walletInfo').style.display = 'inline'
-        checkExistingAccess()
-      }
-    }, 500)
-
-    // Check if wallet already paid
-    async function checkExistingAccess() {
-      if (!walletAddress) return
-      try {
-        const res = await fetch(`${API}/api/access?address=${walletAddress}`)
-        const data = await res.json()
-        if (data.hasAccess) {
-          console.log('[Blog] Wallet has existing access, loading full content...')
-          // Fetch full content with wallet header (no payment needed)
-          const fullRes = await fetch(`${API}/api/full`, {
-            headers: { 'X-Wallet-Address': walletAddress }
-          })
-          if (fullRes.ok) {
-            const fullData = await fullRes.json()
-            showFullContent(fullData, '✓ already paid')
-          }
-        }
-      } catch (err) {
-        console.log('[Blog] Could not check access:', err)
-      }
-    }
-
-    // Load preview, then check access before showing paywall
+    // Load preview, then check if we already have a cached credential
     async function loadPreview() {
       try {
         const res = await fetch(`${API}/api/preview`)
@@ -147,39 +95,33 @@
         document.getElementById('previewContent').innerHTML = renderContent(data.content)
         document.getElementById('price').textContent = `${data.price} ${data.currency}`
 
-        // Wait briefly for wallet address from extension, then check access
-        await new Promise(r => setTimeout(r, 600))
-
-        // If wallet connected and already paid, skip the paywall entirely
-        if (walletAddress) {
-          const accessRes = await fetch(`${API}/api/access?address=${walletAddress}`)
-          const accessData = await accessRes.json()
-          if (accessData.hasAccess) {
-            const fullRes = await fetch(`${API}/api/full`)
-            if (fullRes.ok) {
-              const fullData = await fullRes.json()
-              showFullContent(fullData, '✓ already paid')
-              return
-            }
-          }
+        // Try fetching full content — if the extension has a cached
+        // credential from a previous payment, it will attach it
+        // automatically and the server will return 200.
+        const fullRes = await fetch(`${API}/api/full`)
+        if (fullRes.ok) {
+          const fullData = await fullRes.json()
+          showFullContent(fullData)
+          return
         }
 
-        // No existing access — show paywall
+        // No cached credential or it was rejected — show paywall
         document.getElementById('paywall').style.display = 'block'
       } catch (err) {
         document.getElementById('title').textContent = 'Error loading article'
       }
     }
 
-    // Unlock via MPP payment
+    // Unlock via MPP — pure protocol:
+    //   fetch → 402 → extension pays → retries with credential → 200
+    // On repeat visits the extension's cached credential is sent automatically,
+    // so the server verifies it and returns 200 without a new charge.
     async function unlockArticle() {
       const btn = document.getElementById('btnUnlock')
       btn.disabled = true
       setStatus('requesting full article...', 'loading')
 
       try {
-        // This fetch returns 402 → extension intercepts → pays → retries → 200
-        // (wallet address is auto-attached by the extension's fetch wrapper)
         const res = await fetch(`${API}/api/full`)
 
         if (res.status === 402) {

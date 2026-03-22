@@ -4,6 +4,10 @@
  * Serves a blog with one free preview and a paid full article.
  * Payment: 0.01 USDC via Tempo MPP (Machine Payment Protocol).
  *
+ * Pure MPP — the server issues 402 challenges, verifies credentials,
+ * and returns receipts. No custom wallet tracking; the client caches
+ * and resends credentials on repeat visits.
+ *
  * Usage:
  *   npx tsx sample_website/server.ts
  *   Open http://localhost:3000
@@ -29,10 +33,7 @@ const ARTICLE_PRICE = '10000' // 0.01 USDC (6 decimals)
 const SECRET_KEY = 'tempo-blog-demo-secret-key-2026'
 const REALM = `localhost:${PORT}`
 
-// ─── Paid addresses (in-memory, resets on restart) ───
-const paidAddresses = new Set<string>()
-
-// ─── Tempo client for verifying payments ───
+// ─── Tempo client for on-chain verification ───
 const tempoClient = createPublicClient({
   chain: tempo,
   transport: http(),
@@ -127,9 +128,79 @@ The 402 status code waited 30 years to find its purpose. Now it has one.
 `.trim(),
 }
 
+// ─── Verify a credential and return full content if valid ───
+async function verifyAndServe(authHeader: string, res: any): Promise<boolean> {
+  try {
+    const credential = Credential.deserialize(authHeader.slice('Payment '.length))
+    const challenge = credential.challenge
+
+    // Verify challenge was issued by us (HMAC check)
+    const isValid = Challenge.verify(challenge as any, { secretKey: SECRET_KEY })
+    if (!isValid) {
+      console.log('[MPP] Invalid challenge signature — rejected')
+      return false
+    }
+
+    // Verify payment on-chain
+    const payload = credential.payload as { type: string; hash?: string }
+    if (payload.type === 'hash' && payload.hash) {
+      try {
+        const receipt = await tempoClient.getTransactionReceipt({
+          hash: payload.hash as `0x${string}`,
+        })
+        if (receipt.status !== 'success') {
+          console.log('[MPP] Transaction failed on-chain')
+          return false
+        }
+        const tx = await tempoClient.getTransaction({
+          hash: payload.hash as `0x${string}`,
+        })
+        console.log(`[MPP] Verified payment from ${tx.from} (tx: ${payload.hash.slice(0, 12)}...)`)
+      } catch (e) {
+        console.log('[MPP] Could not verify tx on-chain, accepting for demo:', payload.hash)
+      }
+    }
+
+    // Payment valid — serve content with receipt
+    const receiptHeader = Credential.serialize({
+      challenge: credential.challenge,
+      payload: credential.payload,
+    })
+
+    res.writeHead(200, {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Expose-Headers': 'Payment-Receipt',
+      'Payment-Receipt': receiptHeader,
+    })
+    res.end(JSON.stringify({
+      title: ARTICLE.title,
+      author: ARTICLE.author,
+      date: ARTICLE.date,
+      content: ARTICLE.full,
+    }))
+    return true
+  } catch (err: any) {
+    console.error('[MPP] Credential verification error:', err.message)
+    return false
+  }
+}
+
 // ─── Server ───
 const server = createServer(async (req, res) => {
   const url = new URL(req.url!, `http://${req.headers.host}`)
+
+  // CORS preflight
+  if (req.method === 'OPTIONS') {
+    res.writeHead(204, {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Headers': 'Authorization, Content-Type',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Expose-Headers': 'WWW-Authenticate, Payment-Receipt',
+    })
+    res.end()
+    return
+  }
 
   // Serve static files
   if (url.pathname === '/' || url.pathname === '/index.html') {
@@ -144,7 +215,7 @@ const server = createServer(async (req, res) => {
     return
   }
 
-  // Free preview endpoint
+  // Free preview
   if (url.pathname === '/api/preview') {
     res.writeHead(200, {
       'Content-Type': 'application/json',
@@ -161,121 +232,16 @@ const server = createServer(async (req, res) => {
     return
   }
 
-  // Check access — has this wallet already paid?
-  if (url.pathname === '/api/access') {
-    const walletAddr = url.searchParams.get('address')?.toLowerCase()
-    if (walletAddr && paidAddresses.has(walletAddr)) {
-      res.writeHead(200, {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-      })
-      res.end(JSON.stringify({ hasAccess: true }))
-    } else {
-      res.writeHead(200, {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-      })
-      res.end(JSON.stringify({ hasAccess: false }))
-    }
-    return
-  }
-
-  // Paid full content endpoint
+  // Paid full content — pure MPP
   if (url.pathname === '/api/full') {
-    // Check if wallet already paid (via X-Wallet-Address header)
-    const walletAddr = (req.headers['x-wallet-address'] as string)?.toLowerCase()
-    if (walletAddr && paidAddresses.has(walletAddr)) {
-      console.log(`[MPP] Returning content for already-paid wallet: ${walletAddr}`)
-      res.writeHead(200, {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-      })
-      res.end(JSON.stringify({
-        title: ARTICLE.title,
-        author: ARTICLE.author,
-        date: ARTICLE.date,
-        content: ARTICLE.full,
-        paidBy: walletAddr,
-      }))
-      return
-    }
-
-    // Check for Authorization header (new payment)
+    // If client presents a credential, verify it
     const authHeader = req.headers['authorization']
-
     if (authHeader && authHeader.startsWith('Payment ')) {
-      try {
-        // Verify the credential
-        const credential = Credential.deserialize(authHeader.slice('Payment '.length))
-        const challenge = credential.challenge
-
-        // Verify challenge ID matches what we would generate
-        const isValid = Challenge.verify(challenge as any, { secretKey: SECRET_KEY })
-        if (!isValid) {
-          res.writeHead(403, { 'Content-Type': 'application/json' })
-          res.end(JSON.stringify({ error: 'Invalid challenge ID' }))
-          return
-        }
-
-        // Verify payment on-chain and extract sender
-        const payload = credential.payload as { type: string; hash?: string }
-        let senderAddress: string | null = null
-
-        if (payload.type === 'hash' && payload.hash) {
-          try {
-            const receipt = await tempoClient.getTransactionReceipt({
-              hash: payload.hash as `0x${string}`,
-            })
-            if (receipt.status !== 'success') {
-              res.writeHead(402, { 'Content-Type': 'application/json' })
-              res.end(JSON.stringify({ error: 'Transaction failed' }))
-              return
-            }
-            // Extract sender address from the transaction
-            const tx = await tempoClient.getTransaction({
-              hash: payload.hash as `0x${string}`,
-            })
-            senderAddress = tx.from.toLowerCase()
-            console.log(`[MPP] Payment verified from: ${senderAddress}`)
-          } catch (e) {
-            // If we can't verify on-chain, accept for demo + use wallet header as fallback
-            console.log('[MPP] Could not verify tx on-chain, accepting for demo:', payload.hash)
-            senderAddress = walletAddr || null
-          }
-        }
-
-        // Record the paid address
-        if (senderAddress) {
-          paidAddresses.add(senderAddress)
-          console.log(`[MPP] Recorded paid address: ${senderAddress} (total: ${paidAddresses.size})`)
-        }
-
-        // Payment verified — return full content with receipt
-        const receiptHeader = Credential.serialize({
-          challenge: credential.challenge,
-          payload: credential.payload,
-        })
-
-        res.writeHead(200, {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-          'Payment-Receipt': receiptHeader,
-        })
-        res.end(JSON.stringify({
-          title: ARTICLE.title,
-          author: ARTICLE.author,
-          date: ARTICLE.date,
-          content: ARTICLE.full,
-          paidBy: senderAddress,
-        }))
-        return
-      } catch (err: any) {
-        console.error('[MPP] Credential verification error:', err.message)
-        // Fall through to 402
-      }
+      const served = await verifyAndServe(authHeader, res)
+      if (served) return
     }
 
-    // No valid payment — return 402 with challenge
+    // No credential or invalid — issue 402 challenge
     const challenge = Challenge.from({
       secretKey: SECRET_KEY,
       realm: REALM,
@@ -290,11 +256,9 @@ const server = createServer(async (req, res) => {
       },
     })
 
-    const wwwAuth = Challenge.serialize(challenge)
-
     res.writeHead(402, {
       'Content-Type': 'application/json',
-      'WWW-Authenticate': wwwAuth,
+      'WWW-Authenticate': Challenge.serialize(challenge),
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Expose-Headers': 'WWW-Authenticate, Payment-Receipt',
     })
@@ -303,18 +267,6 @@ const server = createServer(async (req, res) => {
       price: '0.01 USDC',
       description: `Full article: ${ARTICLE.title}`,
     }))
-    return
-  }
-
-  // CORS preflight
-  if (req.method === 'OPTIONS') {
-    res.writeHead(204, {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Headers': 'Authorization, Content-Type, X-Wallet-Address',
-      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-      'Access-Control-Expose-Headers': 'WWW-Authenticate, Payment-Receipt',
-    })
-    res.end()
     return
   }
 

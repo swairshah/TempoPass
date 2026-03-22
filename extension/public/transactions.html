@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>tempo — transactions</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="transactions.css">
+</head>
+<body>
+  <nav>
+    <a href="#" class="nav-brand">tempo/access-key</a>
+    <div class="nav-meta">
+      <span class="network-badge">mainnet</span>
+    </div>
+  </nav>
+
+  <main>
+    <!-- No active key -->
+    <div id="viewNoKey" class="hidden">
+      <h1>no active access key</h1>
+      <p class="text-muted">open the extension popup to create one.</p>
+    </div>
+
+    <!-- Active key — send + log -->
+    <div id="viewActive" class="hidden">
+      <section class="key-status">
+        <div class="status-line">
+          <span class="status-badge status-active">● active</span>
+          <span class="status-meta" id="statusMeta">—</span>
+        </div>
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="label">wallet</span>
+            <span class="value mono" id="walletAddr">—</span>
+          </div>
+          <div class="info-item">
+            <span class="label">access key</span>
+            <span class="value mono" id="keyAddr">—</span>
+          </div>
+          <div class="info-item">
+            <span class="label">expires</span>
+            <span class="value" id="keyExpiry">—</span>
+          </div>
+          <div class="info-item">
+            <span class="label">remaining limit</span>
+            <span class="value" id="keyRemaining">—</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="send-section">
+        <h2>send transfer</h2>
+        <p class="text-muted">signed by your access key — no biometric prompt.</p>
+
+        <div class="form-group">
+          <label>recipient</label>
+          <input type="text" id="inputRecipient" placeholder="0x...">
+        </div>
+        <div class="form-group">
+          <label>amount (usdc)</label>
+          <input type="number" id="inputAmount" value="0.5" min="0.000001" step="0.01">
+        </div>
+        <button id="btnSend" class="btn btn-primary">send →</button>
+      </section>
+
+      <section class="tx-section" id="txSection">
+        <h2>recent transactions</h2>
+        <div id="txLog"></div>
+        <p id="txEmpty" class="text-muted">no transactions yet.</p>
+      </section>
+    </div>
+  </main>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="transactions.js"></script>
+</body>
+</html>

@@ -2,49 +2,56 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=400, initial-scale=1.0">
-  <title>Tempo Access Key</title>
+  <meta name="viewport" content="width=380, initial-scale=1.0">
+  <title>tempo access key</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
   <div id="app">
     <header class="header">
-      <div class="logo">🎵 Tempo Access Key</div>
-      <div class="network-badge" id="networkBadge">Mainnet</div>
+      <div class="logo">tempo/access-key</div>
+      <div class="network-badge">mainnet</div>
     </header>
 
-    <!-- State: Not Connected -->
+    <!-- Tab bar (only shown when access key is active) -->
+    <div id="tabBar" class="tab-bar hidden">
+      <button class="tab active" data-tab="status">status</button>
+      <button class="tab" data-tab="send">send</button>
+      <button class="tab" data-tab="history">history</button>
+    </div>
+
+    <!-- Not Connected -->
     <div id="viewSetup" class="view">
       <div class="card">
-        <h2>Connect Your Tempo Wallet</h2>
-        <p class="subtitle">Connect your existing Tempo wallet passkey. We'll read your credential from wallet.tempo.xyz — your private key never leaves your device.</p>
-
-        <button id="btnConnectWallet" class="btn btn-primary">
-          🔗 Connect Tempo Wallet
-        </button>
-        <small class="help-text">Opens wallet.tempo.xyz briefly to read your passkey credential, then closes.</small>
+        <h2>connect wallet</h2>
+        <p class="subtitle">read your existing passkey credential from wallet.tempo.xyz. your private key never leaves your device.</p>
+        <button id="btnConnectWallet" class="btn btn-primary">connect tempo wallet</button>
+        <small class="help-text">briefly opens wallet.tempo.xyz to read your credential.</small>
       </div>
     </div>
 
-    <!-- State: Connected, create access key -->
+    <!-- Connected, create access key -->
     <div id="viewConnect" class="view hidden">
       <div class="card">
-        <h2>Create Access Key</h2>
-        <p class="subtitle">Use your passkey (Touch ID / Face ID) to authorize a time-limited access key. After that, no more biometric prompts until it expires.</p>
+        <h2>create access key</h2>
+        <p class="subtitle">authorize a time-limited key with your passkey. no more biometric prompts until it expires.</p>
 
         <div class="info-grid" style="margin-bottom: 16px;">
           <div class="info-item">
-            <span class="label">Wallet Address</span>
+            <span class="label">wallet</span>
             <span class="value mono" id="connectWalletAddr">—</span>
           </div>
           <div class="info-item">
-            <span class="label">USDC Balance</span>
+            <span class="label">balance</span>
             <span class="value" id="connectBalance">—</span>
           </div>
         </div>
 
         <div class="form-group">
-          <label>Access Key Expiry</label>
+          <label>expiry</label>
           <select id="selectExpiry">
             <option value="1">1 hour</option>
             <option value="6">6 hours</option>
@@ -56,92 +63,88 @@
         </div>
 
         <div class="form-group">
-          <label>Spending Limit (USDC)</label>
+          <label>spending limit (usdc)</label>
           <input type="number" id="inputLimit" value="2" min="0.01" step="0.01">
-          <small>Maximum amount this access key can spend in TIP-20 transfers.</small>
+          <small>max this key can spend in transfers + gas.</small>
         </div>
 
-        <button id="btnCreateAccessKey" class="btn btn-primary">
-          🔑 Create Access Key (Passkey Prompt)
-        </button>
-
-        <button id="btnDisconnect" class="btn btn-ghost" style="margin-top: 8px;">
-          Disconnect Wallet
-        </button>
+        <button id="btnCreateAccessKey" class="btn btn-primary">create access key →</button>
+        <button id="btnDisconnect" class="btn btn-ghost" style="margin-top: 6px;">disconnect</button>
       </div>
     </div>
 
-    <!-- State: Working -->
+    <!-- Working -->
     <div id="viewCreating" class="view hidden">
       <div class="card center">
         <div class="spinner"></div>
-        <h2>Working...</h2>
-        <p class="subtitle" id="creatingStatus">Connecting...</p>
+        <h2>working...</h2>
+        <p class="subtitle" id="creatingStatus">connecting...</p>
       </div>
     </div>
 
-    <!-- State: Active Session -->
-    <div id="viewActive" class="view hidden">
+    <!-- Active: Status tab -->
+    <div id="tabStatus" class="view hidden">
       <div class="card">
-        <div class="status-badge status-active">🟢 Active</div>
-        <h2>Access Key Ready</h2>
-        <p class="subtitle">Transactions signed by the access key — no biometric prompts.</p>
+        <div class="status-badge status-active">● active</div>
+        <h2>access key ready</h2>
+        <p class="subtitle">transactions signed automatically — no biometric prompts.</p>
 
         <div class="info-grid">
           <div class="info-item">
-            <span class="label">Wallet Address</span>
+            <span class="label">wallet</span>
             <span class="value mono" id="activeWalletAddr">—</span>
           </div>
           <div class="info-item">
-            <span class="label">Access Key ID</span>
+            <span class="label">key</span>
             <span class="value mono" id="activeKeyId">—</span>
           </div>
           <div class="info-item">
-            <span class="label">Expires</span>
+            <span class="label">expires</span>
             <span class="value" id="activeExpiry">—</span>
           </div>
           <div class="info-item">
-            <span class="label">Remaining Limit</span>
+            <span class="label">remaining</span>
             <span class="value" id="activeRemaining">—</span>
           </div>
         </div>
 
         <hr>
-        <h3>💸 Send Transfer</h3>
+        <button id="btnRevokeKey" class="btn btn-danger">clear access key</button>
+      </div>
+    </div>
+
+    <!-- Active: Send tab -->
+    <div id="tabSend" class="view hidden">
+      <div class="card">
+        <h2>send transfer</h2>
+        <p class="subtitle">signed by your access key — no biometric prompt.</p>
+
         <div class="form-group">
-          <label>Recipient Address</label>
+          <label>recipient</label>
           <input type="text" id="inputRecipient" placeholder="0x...">
         </div>
         <div class="form-group">
-          <label>Amount (USDC)</label>
-          <input type="number" id="inputAmount" value="1" min="0.000001" step="0.01">
+          <label>amount (usdc)</label>
+          <input type="number" id="inputAmount" value="0.5" min="0.000001" step="0.01">
         </div>
-        <button id="btnSendTransfer" class="btn btn-primary">
-          Send with Access Key
-        </button>
-        <hr>
-        <button id="btnRevokeKey" class="btn btn-danger">
-          🗑️ Clear Access Key
-        </button>
+        <button id="btnSendTransfer" class="btn btn-primary">send →</button>
       </div>
     </div>
 
-    <!-- State: Expired -->
+    <!-- Active: History tab -->
+    <div id="tabHistory" class="view hidden">
+      <div id="txLogEntries"></div>
+      <p id="txEmpty" class="subtitle center" style="padding: 20px 0;">no transactions yet.</p>
+    </div>
+
+    <!-- Expired -->
     <div id="viewExpired" class="view hidden">
       <div class="card center">
-        <div class="status-badge status-expired">🔴 Expired</div>
-        <h2>Access Key Expired</h2>
-        <p class="subtitle">Authenticate with your passkey to create a new one.</p>
-        <button id="btnNewKey" class="btn btn-primary">
-          🔑 Create New Access Key
-        </button>
+        <div class="status-badge status-expired">● expired</div>
+        <h2>access key expired</h2>
+        <p class="subtitle">authenticate again to create a new one.</p>
+        <button id="btnNewKey" class="btn btn-primary">create new key →</button>
       </div>
-    </div>
-
-    <!-- Transaction Log -->
-    <div id="txLog" class="tx-log hidden">
-      <h3>Recent Transactions</h3>
-      <div id="txLogEntries"></div>
     </div>
 
     <div id="toast" class="toast hidden"></div>

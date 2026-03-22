@@ -7,6 +7,7 @@
   A Chrome extension that creates time-limited, spending-capped access keys for your existing Tempo wallet. Uses your actual wallet passkey — no private keys, no new wallets.
 </p>
 
+<img src="store-assets/tempo-wallet-demo.gif" alt="Demo: connect wallet, create access key, send" width="680">
 
 ```
 ┌─────────────────────────────────────────────────────────┐

@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Tempo Access Key",
+  "name": "TempoPass",
   "version": "2.0.0",
-  "description": "Delegate signing authority from your Tempo wallet. Auto-pay MPP services with time-limited access keys.",
+  "description": "Delegate signing from your Tempo wallet. Auto-pay MPP content with time-limited, spending-capped access keys.",
   "permissions": [
     "storage",
     "alarms",

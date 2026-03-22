@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Policy — Tempo Keys</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg: rgb(15, 17, 21);
+      --text: rgb(201, 204, 209);
+      --text-bright: rgb(229, 231, 235);
+      --text-muted: rgb(107, 114, 128);
+      --accent: rgb(245, 158, 11);
+      --border: rgba(107, 114, 128, 0.2);
+    }
+    html { font-size: 15px; line-height: 1.7; -webkit-font-smoothing: antialiased; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      min-height: 100vh;
+      padding: 40px 24px;
+    }
+    main { max-width: 640px; margin: 0 auto; }
+    h1 {
+      color: var(--text-bright);
+      font-size: 22px;
+      font-weight: 500;
+      margin-bottom: 8px;
+    }
+    .updated {
+      color: var(--text-muted);
+      font-size: 13px;
+      margin-bottom: 32px;
+    }
+    h2 {
+      color: var(--accent);
+      font-size: 16px;
+      font-weight: 500;
+      margin-top: 28px;
+      margin-bottom: 8px;
+    }
+    p, li {
+      color: var(--text);
+      font-size: 14px;
+      margin-bottom: 12px;
+    }
+    ul { padding-left: 20px; }
+    li { margin-bottom: 6px; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .footer {
+      margin-top: 48px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>privacy policy</h1>
+    <p class="updated">last updated: march 21, 2026</p>
+
+    <p>Tempo Keys is a browser extension that creates time-limited access keys for Tempo wallets and auto-pays MPP (Machine Payment Protocol) services. This policy explains what data the extension handles.</p>
+
+    <h2>data collected</h2>
+    <p>Tempo Keys does <strong>not</strong> collect, transmit, or sell any personal data. All data stays on your device.</p>
+
+    <h2>data stored locally</h2>
+    <p>The extension stores the following in Chrome's local storage (never sent to any server):</p>
+    <ul>
+      <li><strong>Wallet credential ID</strong> — a reference to your existing Tempo passkey, read from wallet.tempo.xyz</li>
+      <li><strong>Public key</strong> — your wallet's public key (not a secret)</li>
+      <li><strong>Access key</strong> — a session-scoped P256 key pair with on-chain spending limits and expiry, stored in session storage (cleared when you close the browser)</li>
+      <li><strong>Transaction history</strong> — a local log of transactions made through the extension</li>
+    </ul>
+
+    <h2>network requests</h2>
+    <p>The extension communicates only with:</p>
+    <ul>
+      <li><strong>wallet.tempo.xyz</strong> — one-time read of your passkey credential during setup</li>
+      <li><strong>Tempo blockchain RPC</strong> (rpc.presto.tempo.xyz) — to submit and verify transactions</li>
+      <li><strong>MPP-enabled websites</strong> — when auto-paying HTTP 402 challenges, the extension sends payment credentials (transaction hashes) to the requesting server</li>
+    </ul>
+    <p>No data is sent to any analytics, tracking, or third-party service.</p>
+
+    <h2>permissions</h2>
+    <ul>
+      <li><strong>storage</strong> — to persist wallet credential and access key</li>
+      <li><strong>alarms</strong> — to check access key expiry</li>
+      <li><strong>scripting</strong> — to read passkey credential from wallet.tempo.xyz</li>
+      <li><strong>activeTab</strong> — to inject the MPP fetch wrapper on the current page</li>
+    </ul>
+
+    <h2>security</h2>
+    <ul>
+      <li>No private keys are ever displayed, exported, or transmitted</li>
+      <li>Access keys have on-chain enforced spending limits and expiry</li>
+      <li>Session keys are stored in session storage and cleared when the browser closes</li>
+      <li>Wallet authentication uses WebAuthn (Touch ID / Face ID) — biometrics never leave your device</li>
+    </ul>
+
+    <h2>third-party services</h2>
+    <p>None. The extension does not use analytics, crash reporting, or any third-party services.</p>
+
+    <h2>changes</h2>
+    <p>Updates to this policy will be posted on this page with a revised date.</p>
+
+    <h2>contact</h2>
+    <p>Questions? Open an issue on <a href="https://github.com/swairshah/tempo-keys">GitHub</a>.</p>
+
+    <div class="footer">tempo keys — browser extension for tempo wallet access keys</div>
+  </main>
+</body>
+</html>

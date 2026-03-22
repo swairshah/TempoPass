@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Tempo Access Key",
-  "version": "1.0.0",
-  "description": "Delegate signing authority from your Tempo wallet with time-limited, spending-capped access keys",
+  "version": "2.0.0",
+  "description": "Delegate signing authority from your Tempo wallet. Auto-pay MPP services with time-limited access keys.",
   "permissions": [
     "storage",
     "alarms",
@@ -25,6 +25,19 @@
     "service_worker": "background.js",
     "type": "module"
   },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["mpp-content.js"],
+      "run_at": "document_start"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["mpp-inject.js"],
+      "matches": ["<all_urls>"]
+    }
+  ],
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",

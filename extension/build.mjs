@@ -15,16 +15,32 @@ const shared = {
   },
 }
 
+// Popup
 await esbuild.build({
   ...shared,
   entryPoints: ['src/popup.ts'],
   outfile: 'dist/popup.js',
 })
 
+// Background service worker (MPP + expiry)
 await esbuild.build({
   ...shared,
   entryPoints: ['src/background.ts'],
   outfile: 'dist/background.js',
+})
+
+// MPP content script (isolated world — bridges page ↔ background)
+await esbuild.build({
+  ...shared,
+  entryPoints: ['src/mpp-content.ts'],
+  outfile: 'dist/mpp-content.js',
+})
+
+// MPP inject script (main world — wraps fetch)
+await esbuild.build({
+  ...shared,
+  entryPoints: ['src/mpp-inject.ts'],
+  outfile: 'dist/mpp-inject.js',
 })
 
 // Copy static assets

@@ -5,7 +5,8 @@
   "scripts": {
     "test:poc": "npx tsx test-access-key.ts",
     "build:ext": "cd extension && node build.mjs",
-    "dev:ext": "cd extension && node build.mjs && echo 'Load extension/dist in chrome://extensions'"
+    "dev:ext": "cd extension && node build.mjs && echo 'Load extension/dist in chrome://extensions'",
+    "dev:blog": "npx tsx sample_website/server.ts"
   },
   "keywords": [],
   "author": "",

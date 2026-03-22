@@ -8,6 +8,9 @@
 
 const EXTENSION_ID = '__TEMPO_MPP__'
 
+// Wallet address (set by content script)
+;(window as any).__TEMPO_WALLET_ADDRESS__ = null
+
 // Store the original fetch
 const originalFetch = window.fetch.bind(window)
 
@@ -17,25 +20,45 @@ const pendingPayments = new Map<string, {
   reject: (error: Error) => void
 }>()
 
-// Listen for credential responses from the content script
+// Listen for messages from the content script
 window.addEventListener('message', (event) => {
   if (event.source !== window) return
-  if (event.data?.type !== `${EXTENSION_ID}:credential`) return
 
-  const { requestId, credential, error } = event.data
-  const pending = pendingPayments.get(requestId)
-  if (!pending) return
-  pendingPayments.delete(requestId)
+  // Credential responses
+  if (event.data?.type === `${EXTENSION_ID}:credential`) {
+    const { requestId, credential, error } = event.data
+    const pending = pendingPayments.get(requestId)
+    if (!pending) return
+    pendingPayments.delete(requestId)
 
-  if (error) {
-    pending.reject(new Error(error))
-  } else {
-    pending.resolve(credential)
+    if (error) {
+      pending.reject(new Error(error))
+    } else {
+      pending.resolve(credential)
+    }
+  }
+
+  // Wallet address from extension
+  if (event.data?.type === `${EXTENSION_ID}:wallet`) {
+    ;(window as any).__TEMPO_WALLET_ADDRESS__ = event.data.address
+    window.dispatchEvent(new CustomEvent('tempo:wallet', {
+      detail: { address: event.data.address }
+    }))
   }
 })
 
 // Wrap fetch
 window.fetch = async function mppFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+  // Attach wallet address to all requests so servers can check existing access
+  const addr = (window as any).__TEMPO_WALLET_ADDRESS__
+  if (addr) {
+    const headers = new Headers(init?.headers)
+    if (!headers.has('X-Wallet-Address')) {
+      headers.set('X-Wallet-Address', addr)
+    }
+    init = { ...init, headers }
+  }
+
   const response = await originalFetch(input, init)
 
   // Only intercept 402 responses with Payment challenge

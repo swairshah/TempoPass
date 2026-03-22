@@ -1,0 +1,211 @@
+/* Matches weblog vibe — JetBrains Mono, dark, muted */
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --bg: rgb(15, 17, 21);
+  --bg-secondary: rgb(26, 29, 35);
+  --border: rgba(107, 114, 128, 0.2);
+  --text: rgb(201, 204, 209);
+  --text-bright: rgb(229, 231, 235);
+  --text-muted: rgb(107, 114, 128);
+  --text-dimmed: rgb(75, 85, 99);
+  --accent: rgb(245, 158, 11);
+  --green: rgb(16, 185, 129);
+  --red: rgb(239, 68, 68);
+  --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
+}
+
+html {
+  font-size: 15px;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-mono);
+  min-height: 100vh;
+}
+
+nav {
+  padding: 20px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+}
+
+.nav-brand {
+  color: var(--text-bright);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 15px;
+}
+
+.nav-brand:hover { color: var(--accent); }
+
+.nav-meta {
+  color: var(--text-dimmed);
+  font-size: 12px;
+}
+
+main {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 40px 32px;
+}
+
+.post-header {
+  margin-bottom: 32px;
+}
+
+.post-header h1 {
+  color: var(--text-bright);
+  font-size: 22px;
+  font-weight: 500;
+  line-height: 1.4;
+  margin-bottom: 8px;
+}
+
+.post-meta {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.post-content {
+  color: var(--text-muted);
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.post-content p {
+  margin-bottom: 16px;
+}
+
+.post-content h2 {
+  color: var(--text-bright);
+  font-size: 18px;
+  font-weight: 500;
+  margin-top: 36px;
+  margin-bottom: 12px;
+}
+
+.post-content strong {
+  color: var(--text-bright);
+  font-weight: 500;
+}
+
+.post-content ul, .post-content li {
+  margin-bottom: 6px;
+}
+
+/* Paywall */
+.paywall {
+  position: relative;
+  margin-top: 24px;
+}
+
+.paywall-fade {
+  position: relative;
+}
+
+.paywall-fade::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 120px;
+  background: linear-gradient(transparent, var(--bg));
+  pointer-events: none;
+}
+
+.paywall-prompt {
+  text-align: center;
+  padding: 32px 20px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-secondary);
+  margin-top: -20px;
+  position: relative;
+  z-index: 1;
+}
+
+.paywall-prompt h3 {
+  color: var(--text-bright);
+  font-size: 16px;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.paywall-prompt p {
+  color: var(--text-muted);
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+
+.paywall-price {
+  color: var(--accent);
+  font-size: 20px;
+  font-weight: 500;
+  margin-bottom: 16px;
+}
+
+.btn {
+  display: inline-block;
+  padding: 10px 24px;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  cursor: pointer;
+  background: none;
+  color: var(--accent);
+  transition: all 0.15s;
+}
+
+.btn:hover {
+  border-color: var(--accent);
+  background: rgba(245, 158, 11, 0.06);
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.status-msg {
+  margin-top: 12px;
+  font-size: 12px;
+  min-height: 20px;
+}
+
+.status-msg.success { color: var(--green); }
+.status-msg.error { color: var(--red); }
+.status-msg.loading { color: var(--text-muted); }
+
+/* Full content (shown after payment) */
+.full-content {
+  animation: fadeIn 0.4s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Receipt badge */
+.receipt-badge {
+  display: inline-block;
+  font-size: 11px;
+  color: var(--green);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  padding: 4px 10px;
+  border-radius: 3px;
+  margin-top: 32px;
+}

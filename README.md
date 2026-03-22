@@ -1,8 +1,13 @@
-# Tempo Access Key Browser Extension
+<p align="center">
+  <img src="extension/icons/icon128.png" alt="Tempo Access Key" width="96">
+</p>
 
-A Chrome extension that creates time-limited, spending-capped access keys for your **existing** Tempo wallet. Uses your actual wallet passkey — no private keys, no new wallets.
+<h1 align="center">Tempo Access Key Browser Extension</h1>
 
-## How It Works
+<p align="center">
+  A Chrome extension that creates time-limited, spending-capped access keys for your existing Tempo wallet. Uses your actual wallet passkey — no private keys, no new wallets.
+</p>
+
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -24,11 +29,11 @@ A Chrome extension that creates time-limited, spending-capped access keys for yo
 
 ## Key Design
 
-- **Uses your EXISTING Tempo wallet passkey** — not a new wallet
+- Uses your EXISTING Tempo wallet passkey
 - Chrome's "Site RP ID Claiming" (Chrome 122+) lets the extension trigger your wallet.tempo.xyz passkey directly
 - The extension reads your credential from wallet.tempo.xyz's localStorage (one-time setup)
-- **No private keys** ever displayed or typed
-- **On-chain enforcement** of expiry & spending limits by the Tempo protocol
+- No private keys ever displayed or typed
+- On-chain enforcement of expiry & spending limits by the Tempo protocol
 
 ## Getting Started
 
@@ -44,7 +49,7 @@ npm run build:ext
 
 ### 3. Load in Chrome
 1. `chrome://extensions/` → enable **Developer mode**
-2. **Load unpacked** → select `extension/dist`
+2. Load unpacked → select `extension/dist`
 3. Click the extension icon
 
 ### 4. Connect & Use
@@ -70,9 +75,9 @@ tempo-extension/
 
 | Property | Value |
 |----------|-------|
-| Chain ID | `42431` |
-| RPC | `https://rpc.moderato.tempo.xyz` |
-| Explorer | `https://explore.testnet.tempo.xyz` |
+| Chain ID | `4217` |
+| RPC | `https://rpc.presto.tempo.xyz` |
+| Explorer | `https://explorer.tempo.xyz` |
 
 ## Tech Stack
 

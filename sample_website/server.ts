@@ -42,7 +42,7 @@ const tempoClient = createPublicClient({
 // ─── Article content ───
 const ARTICLE = {
   title: 'The Architecture of Machine Payments',
-  author: 'Tempo Labs',
+  author: 'XYZ',
   date: 'March 21, 2026',
   preview: `
 The internet was built for humans. Every payment flow — from credit card forms to 
